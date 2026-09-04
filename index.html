@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>สรุปเกณฑ์รับสมัครมหาวิทยาลัย 2570</title>
+<meta name="description" content="รวมเกณฑ์การสมัคร จำนวนรับ และเอกสารที่ใช้ของทุกโครงการรับสมัคร ปีการศึกษา 2570 ไว้ในที่เดียว">
+
+<!--
+  ═══════════════════════════════════════════════════════════════
+  MANIFEST — เพิ่มมหาวิทยาลัย/ประกาศใหม่ แค่เติมชื่อไฟล์ตรงนี้บรรทัดเดียว
+  ไฟล์ที่เพิ่มต้องอยู่โฟลเดอร์เดียวกับ index.html นี้ และใช้ schema
+  เดียวกับไฟล์ประกาศต้นแบบ (มี <script id="announcement-data">)
+  ═══════════════════════════════════════════════════════════════
+-->
+<script id="manifest-data">
+const MANIFEST = [
+  "kmutnb-cit-quota-2570.html",
+  "kmutnb-fte-quota-2570.html",
+  "kmutnb-fte-portfolio-2570.html",
+  "kmutnb-sci-tcas1-2570.html",
+  "kmutnb-fba-rayong-portfolio-2570.html",
+  "maejo-guidance-quota-2570.html",
+  "kmutt-school-consortium-r1-2570.html",
+  "silpakorn-portfolio-r1-1-2570.html"
+];
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@500;600;700&family=Sarabun:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --ink:#1B2A4A;
+    --ink-soft:#3D4E70;
+    --paper:#F5F7FA;
+    --panel:#FFFFFF;
+    --line:#E3E8F0;
+    --mango:#FF9F1C;
+    --mango-deep:#E8850A;
+    --mint:#06D6A0;
+    --coral:#EF476F;
+    --radius-lg: 22px;
+    --radius-sm: 14px;
+    --shadow: 0 8px 24px -12px rgba(27,42,74,.22);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper); color:var(--ink);
+    font-family:'Sarabun',sans-serif; line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.display{font-family:'Kanit',sans-serif;}
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  a{color:inherit; text-decoration:none;}
+  ::selection{background:var(--mango); color:#fff;}
+  .wrap{max-width:680px; margin:0 auto; padding:0 16px 40px;}
+
+  /* ── Hero ────────────────────────────────────────── */
+  .hero{
+    background:linear-gradient(155deg, var(--ink) 0%, #24365F 65%, #2C3F6B 100%);
+    color:#fff; padding:28px 20px 24px;
+    border-radius:0 0 var(--radius-lg) var(--radius-lg);
+    position:relative; overflow:hidden;
+  }
+  .hero::after{
+    content:""; position:absolute; inset:0;
+    background:radial-gradient(circle at 85% -10%, rgba(255,159,28,.35), transparent 45%);
+    pointer-events:none;
+  }
+  .hero__eyebrow{ font-size:12.5px; color:#C9D4EA; }
+  .hero__title{ font-size:23px; font-weight:700; margin:8px 0 6px; line-height:1.35;}
+  .hero__sub{ font-size:13.5px; color:#DCE4F5; margin:0 0 18px; }
+  .hero__urgent{
+    display:flex; align-items:center; gap:12px;
+    background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.15);
+    border-radius:16px; padding:12px 14px; font-size:13px;
+  }
+  .hero__urgent b{ font-family:'IBM Plex Mono',monospace; color:var(--mango); font-size:17px;}
+  .hero__urgent .u-label{ color:#fff; font-weight:600; display:block; margin-bottom:1px;}
+  .hero__urgent .u-sub{ color:#C9D4EA; font-size:12px;}
+
+  /* ── Search / filters ───────────────────────────── */
+  .searchbar{ position:sticky; top:0; z-index:30; background:var(--paper); padding:14px 0 8px; }
+  .searchbox{
+    display:flex; align-items:center; gap:8px;
+    background:var(--panel); border:1.5px solid var(--line); border-radius:100px;
+    padding:11px 16px; box-shadow:var(--shadow);
+  }
+  .searchbox input{
+    border:none; outline:none; background:transparent; width:100%;
+    font-family:'Sarabun',sans-serif; font-size:14.5px; color:var(--ink);
+  }
+  .filters-row{ display:flex; gap:8px; margin-top:10px; overflow-x:auto; padding-bottom:2px; scrollbar-width:none;}
+  .filters-row::-webkit-scrollbar{ display:none; }
+  .chip{
+    flex:0 0 auto; font-size:12.5px; padding:7px 14px; border-radius:100px;
+    background:var(--panel); border:1.5px solid var(--line); cursor:pointer;
+    font-weight:500; color:var(--ink-soft); white-space:nowrap;
+  }
+  .chip.active{ background:var(--ink); border-color:var(--ink); color:#fff; }
+  .sortrow{ display:flex; justify-content:space-between; align-items:center; margin:14px 0 4px; }
+  .sortrow__count{ font-size:12.5px; color:var(--ink-soft); }
+  .sortrow select{
+    font-family:'Sarabun',sans-serif; font-size:12.5px; border:1.5px solid var(--line);
+    border-radius:100px; padding:6px 12px; background:var(--panel); color:var(--ink);
+  }
+
+  /* ── Announcement cards ─────────────────────────── */
+  .card{
+    display:block; background:var(--panel); border:1px solid var(--line);
+    border-left-width:5px; border-radius:var(--radius-sm);
+    padding:16px 16px 14px; margin-bottom:12px; position:relative;
+    transition:transform .15s ease, box-shadow .15s ease;
+  }
+  .card:active{ transform:scale(.985); }
+  .card__top{ display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
+  .card__tag{ font-size:11.5px; color:var(--ink-soft); font-weight:500; }
+  .card__uni{ font-weight:600; color:var(--ink); }
+  .card__title{ font-size:16px; font-weight:700; margin:6px 0 8px; line-height:1.35; }
+  .card__badges{ display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px;}
+  .badge{
+    font-size:11px; padding:3px 9px; border-radius:100px;
+    background:#EEF2FA; color:var(--ink-soft); font-weight:500;
+  }
+  .card__stats{ display:flex; gap:16px; margin-bottom:10px; flex-wrap:wrap;}
+  .stat{ font-size:12.5px; color:var(--ink-soft); }
+  .stat b{ font-family:'IBM Plex Mono',monospace; color:var(--ink); font-size:14px; display:block; }
+  .card__cd{
+    display:inline-flex; align-items:center; gap:7px;
+    font-size:12px; padding:6px 11px; border-radius:100px;
+    background:#FFF3E2; color:var(--mango-deep); font-weight:600;
+  }
+  .card__cd.urgent{ background:#FDE7EC; color:var(--coral); }
+  .card__cd.done{ background:#E4FBF3; color:#0A9E77; }
+  .card__cd b{ font-family:'IBM Plex Mono',monospace; }
+  .card__arrow{ position:absolute; right:14px; bottom:14px; color:var(--ink-soft); font-size:15px; }
+
+  .skeleton{
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius-sm);
+    padding:16px; margin-bottom:12px; height:118px;
+    background-image:linear-gradient(90deg, var(--panel) 0%, #EEF1F6 50%, var(--panel) 100%);
+    background-size:200% 100%; animation:shimmer 1.3s infinite;
+  }
+  @keyframes shimmer{ 0%{background-position:200% 0;} 100%{background-position:-200% 0;} }
+
+  .empty{ text-align:center; padding:40px 10px; color:var(--ink-soft); font-size:13.5px; }
+  .error-note{
+    font-size:12px; color:var(--coral); background:#FDE7EC; border-radius:10px; padding:8px 12px; margin-bottom:12px;
+  }
+  .footer-note{ text-align:center; font-size:11.5px; color:var(--ink-soft); opacity:.75; margin-top:18px; }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="wrap" style="padding:0;">
+    <div class="hero__eyebrow">📋 ศูนย์รวมข่าวรับสมัคร ปีการศึกษา 2570</div>
+    <h1 class="hero__title">เกณฑ์รับสมัคร จำนวนรับ<br>และเอกสาร ในที่เดียว</h1>
+    <p class="hero__sub" id="heroSub">กำลังโหลดประกาศ…</p>
+    <div class="hero__urgent" id="urgentBox" style="display:none;">
+      <b id="urgentDays">–</b>
+      <div><span class="u-label" id="urgentLabel"></span><span class="u-sub" id="urgentSub"></span></div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="searchbar">
+    <div class="searchbox">
+      <span>🔍</span>
+      <input type="text" id="searchInput" placeholder="ค้นหามหาวิทยาลัย คณะ หรือสาขา…">
+    </div>
+    <div class="filters-row" id="chipsWrap"></div>
+  </div>
+
+  <div class="sortrow">
+    <span class="sortrow__count" id="countLabel">กำลังโหลด…</span>
+    <select id="sortSelect">
+      <option value="deadline">ปิดรับเร็วที่สุดก่อน</option>
+      <option value="name">ชื่อคณะ A–Z</option>
+    </select>
+  </div>
+
+  <div id="cardsWrap">
+    <div class="skeleton"></div>
+    <div class="skeleton"></div>
+    <div class="skeleton"></div>
+  </div>
+
+  <p class="footer-note">ข้อมูลรวบรวมจากประกาศทางการของแต่ละมหาวิทยาลัย โปรดตรวจสอบรายละเอียดล่าสุดกับเว็บไซต์ต้นทางก่อนสมัครจริง</p>
+</div>
+
+<script>
+(async function(){
+  const $ = (sel) => document.querySelector(sel);
+  const el = (tag, cls, html) => { const n=document.createElement(tag); if(cls) n.className=cls; if(html!==undefined) n.innerHTML=html; return n; };
+  const esc = (s) => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+
+  function daysUntil(dateStr){
+    const today = new Date(); today.setHours(0,0,0,0);
+    const target = new Date(dateStr); target.setHours(0,0,0,0);
+    return Math.round((target-today)/86400000);
+  }
+
+  async function loadAnnouncement(path){
+    const res = await fetch(path, {cache:'no-store'});
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const text = await res.text();
+    const doc = new DOMParser().parseFromString(text, 'text/html');
+    const script = doc.getElementById('announcement-data');
+    if(!script) throw new Error('ไม่พบข้อมูล announcement-data');
+    const data = JSON.parse(script.textContent);
+    data.__path = path;
+    return data;
+  }
+
+  const cardsWrap = $('#cardsWrap');
+  const results = [];
+  const errors = [];
+
+  await Promise.all(MANIFEST.map(async (path) => {
+    try{ results.push(await loadAnnouncement(path)); }
+    catch(e){ errors.push({path, message:e.message}); }
+  }));
+
+  // ── Precompute per-announcement summary ──────────
+  results.forEach(d=>{
+    const upcoming = d.timeline
+      .map(t=>({...t, diff:daysUntil(t.date)}))
+      .filter(t=>t.diff>=0)
+      .sort((a,b)=>a.diff-b.diff)[0];
+    d.__upcoming = upcoming || null;
+    d.__totalQuota = d.majors.reduce((sum,m)=> sum + m.quotas.reduce((s,q)=>s+(q.value||0),0), 0);
+    const gpaxVals = [d.qualifications.gpaxMin, ...d.majors.map(m=>m.gpaxMin)].filter(v=>typeof v==='number');
+    d.__gpaxRange = gpaxVals.length ? [Math.min(...gpaxVals), Math.max(...gpaxVals)] : null;
+    d.__searchIndex = [
+      d.meta.university, d.meta.faculty, d.meta.programTitle, d.meta.round,
+      ...d.majors.map(m=>`${m.code} ${m.name} ${m.nameEn}`)
+    ].join(' ').toLowerCase();
+  });
+
+  // ── Hero: overall most urgent deadline ───────────
+  const allDeadlines = results
+    .map(d=> d.__upcoming ? {...d.__upcoming, uni:d.meta.universityShort, faculty:d.meta.faculty} : null)
+    .filter(Boolean)
+    .sort((a,b)=>a.diff-b.diff);
+  $('#heroSub').textContent = errors.length===0
+    ? `รวม ${results.length} ประกาศ จากทุกมหาวิทยาลัยที่เพิ่มไว้ในระบบ`
+    : `โหลดสำเร็จ ${results.length} ประกาศ (มีปัญหา ${errors.length} ไฟล์ ดูด้านล่าง)`;
+  if(allDeadlines.length){
+    const top = allDeadlines[0];
+    $('#urgentBox').style.display='flex';
+    $('#urgentDays').textContent = top.diff===0 ? 'วันนี้' : top.diff;
+    $('#urgentLabel').textContent = `${top.label} · ${top.uni}`;
+    $('#urgentSub').textContent = `${top.faculty} — ${top.dateDisplay}`;
+  }
+
+  // ── Error notes ───────────────────────────────────
+  if(errors.length){
+    errors.forEach(e=>{
+      cardsWrap.parentElement.insertBefore(
+        el('div','error-note', `⚠️ โหลด <span class="mono">${esc(e.path)}</span> ไม่สำเร็จ (${esc(e.message)}) — ตรวจสอบว่าไฟล์อยู่โฟลเดอร์เดียวกับ index.html`),
+        cardsWrap
+      );
+    });
+  }
+
+  // ── Filter chips (education levels found across data) ─
+  const levelSet = new Set();
+  results.forEach(d => (d.qualifications.educationLevel||[]).forEach(l=>levelSet.add(l)));
+  const chipsWrap = $('#chipsWrap');
+  let activeLevel = 'all';
+  const allChip = el('div','chip active','ทั้งหมด');
+  allChip.onclick = ()=>setLevel('all');
+  chipsWrap.appendChild(allChip);
+  [...levelSet].forEach(level=>{
+    const c = el('div','chip', esc(level));
+    c.onclick = ()=>setLevel(level);
+    chipsWrap.appendChild(c);
+  });
+  function setLevel(l){
+    activeLevel = l;
+    [...chipsWrap.children].forEach(c=> c.classList.toggle('active', c.textContent === (l==='all' ? 'ทั้งหมด' : l)));
+    render();
+  }
+
+  // ── Render ────────────────────────────────────────
+  const searchInput = $('#searchInput');
+  const sortSelect = $('#sortSelect');
+
+  function render(){
+    const q = searchInput.value.trim().toLowerCase();
+    let filtered = results.filter(d=>{
+      const matchesQ = !q || d.__searchIndex.includes(q);
+      const matchesLevel = activeLevel==='all' || (d.qualifications.educationLevel||[]).includes(activeLevel);
+      return matchesQ && matchesLevel;
+    });
+
+    if(sortSelect.value==='deadline'){
+      filtered.sort((a,b)=>{
+        const da = a.__upcoming ? a.__upcoming.diff : Infinity;
+        const db = b.__upcoming ? b.__upcoming.diff : Infinity;
+        return da - db;
+      });
+    } else {
+      filtered.sort((a,b)=> a.meta.faculty.localeCompare(b.meta.faculty, 'th'));
+    }
+
+    $('#countLabel').textContent = `${filtered.length} ประกาศ`;
+    cardsWrap.innerHTML = '';
+
+    if(filtered.length===0){
+      cardsWrap.appendChild(el('div','empty','ไม่พบประกาศที่ตรงกับคำค้นหา 🔍'));
+      return;
+    }
+
+    filtered.forEach(d=>{
+      const card = el('a','card');
+      card.href = d.__path;
+      card.style.borderLeftColor = d.meta.accentColor || 'var(--ink)';
+
+      const top = el('div','card__top');
+      top.appendChild(el('div','card__tag', `<span class="card__uni">${esc(d.meta.universityShort)}</span> · ${esc(d.meta.faculty)}`));
+      card.appendChild(top);
+
+      card.appendChild(el('div','card__title', esc(d.meta.programTitle)));
+
+      const badges = el('div','card__badges');
+      (d.qualifications.educationLevel||[]).forEach(l=> badges.appendChild(el('span','badge', esc(l))));
+      badges.appendChild(el('span','badge', esc(d.meta.round)));
+      card.appendChild(badges);
+
+      const stats = el('div','card__stats');
+      stats.appendChild(el('div','stat', `รับรวม<b>${d.__totalQuota.toLocaleString()} คน</b>`));
+      stats.appendChild(el('div','stat', `สาขา<b>${d.majors.length}</b>`));
+      if(d.__gpaxRange){
+        const [lo,hi] = d.__gpaxRange;
+        stats.appendChild(el('div','stat', `GPAX<b>${lo===hi ? lo.toFixed(2) : lo.toFixed(2)+'–'+hi.toFixed(2)}</b>`));
+      }
+      card.appendChild(stats);
+
+      if(d.__upcoming){
+        const cd = el('span','card__cd');
+        if(d.__upcoming.isDeadline && d.__upcoming.diff<=14) cd.classList.add('urgent');
+        cd.innerHTML = d.__upcoming.diff===0
+          ? `<b>วันนี้</b> ${esc(d.__upcoming.label)}`
+          : `<b>อีก ${d.__upcoming.diff} วัน</b> ${esc(d.__upcoming.label)} (${esc(d.__upcoming.dateDisplay)})`;
+        card.appendChild(cd);
+      } else {
+        card.appendChild(el('span','card__cd done','🏁 ครบทุกขั้นตอนแล้ว'));
+      }
+
+      card.appendChild(el('span','card__arrow','→'));
+      cardsWrap.appendChild(card);
+    });
+  }
+
+  searchInput.addEventListener('input', render);
+  sortSelect.addEventListener('change', render);
+  render();
+})();
+</script>
+</body>
+</html>
