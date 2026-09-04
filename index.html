@@ -22,7 +22,11 @@ const MANIFEST = [
   "kmutnb-fba-rayong-portfolio-2570.html",
   "maejo-guidance-quota-2570.html",
   "kmutt-school-consortium-r1-2570.html",
-  "silpakorn-portfolio-r1-1-2570.html"
+  "silpakorn-portfolio-r1-1-2570.html",
+  "kmitl-it-portfolio-r1-1-2570.html",
+  "kmitl-sci-portfolio-r1-1-2570.html",
+  "kmitl-sci-portfolio-r1-2-2570.html",
+  "kmitl-la-portfolio-r1-2570.html"
 ];
 </script>
 
@@ -135,6 +139,7 @@ const MANIFEST = [
   }
   .card__cd.urgent{ background:#FDE7EC; color:var(--coral); }
   .card__cd.done{ background:#E4FBF3; color:#0A9E77; }
+  .card__cd.wait{ background:#EEF2FA; color:var(--ink-soft); }
   .card__cd b{ font-family:'IBM Plex Mono',monospace; }
   .card__arrow{ position:absolute; right:14px; bottom:14px; color:var(--ink-soft); font-size:15px; }
 
@@ -150,7 +155,10 @@ const MANIFEST = [
   .error-note{
     font-size:12px; color:var(--coral); background:#FDE7EC; border-radius:10px; padding:8px 12px; margin-bottom:12px;
   }
+  .hidden-note{ text-align:center; font-size:11.5px; color:var(--ink-soft); opacity:.55; margin-top:16px; }
   .footer-note{ text-align:center; font-size:11.5px; color:var(--ink-soft); opacity:.75; margin-top:18px; }
+  .card{ animation:fadeUp .22s ease both; }
+  @keyframes fadeUp{ from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:none;} }
 </style>
 </head>
 <body>
@@ -184,183 +192,330 @@ const MANIFEST = [
     </select>
   </div>
 
+  <div id="errorWrap"></div>
+
   <div id="cardsWrap">
     <div class="skeleton"></div>
     <div class="skeleton"></div>
     <div class="skeleton"></div>
   </div>
 
+  <p class="hidden-note" id="hiddenNote" style="display:none;"></p>
+
   <p class="footer-note">ข้อมูลรวบรวมจากประกาศทางการของแต่ละมหาวิทยาลัย โปรดตรวจสอบรายละเอียดล่าสุดกับเว็บไซต์ต้นทางก่อนสมัครจริง</p>
 </div>
 
 <script>
-(async function(){
+(function(){
   const $ = (sel) => document.querySelector(sel);
   const el = (tag, cls, html) => { const n=document.createElement(tag); if(cls) n.className=cls; if(html!==undefined) n.innerHTML=html; return n; };
   const esc = (s) => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 
-  function daysUntil(dateStr){
+  /* ═══ ตั้งค่า ════════════════════════════════════════════
+     CACHE_VER — เปลี่ยนเลขนี้เมื่อแก้ schema หรือแก้ข้อมูลในไฟล์ประกาศ
+                 แล้วอยากให้ทุกคนโหลดใหม่ทันที (ล้าง cache ทั้งหมด)
+     CACHE_TTL — อายุ cache (มิลลิวินาที) ค่าเริ่มต้น 30 นาที
+     ═══════════════════════════════════════════════════════ */
+  const CACHE_VER = 'v1';
+  const CACHE_TTL = 30 * 60 * 1000;
+  const CACHE_PREFIX = 'admguide:' + CACHE_VER + ':';
+
+  /* ── วันที่: parse เองเป็นเวลาท้องถิ่น ───────────────────
+     new Date("2026-11-30") จะถูกตีความเป็น UTC เที่ยงคืน
+     ทำให้บางเครื่องวันที่เลื่อนไป 1 วัน — ซึ่งอันตรายมาก
+     เพราะเราใช้วันที่นี้ตัดสินใจซ่อนประกาศ                */
+  function parseLocalDate(str){
+    if(!str) return null;
+    const m = String(str).match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if(m) return new Date(+m[1], +m[2]-1, +m[3]);
+    const d = new Date(str);
+    return isNaN(d.getTime()) ? null : new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  }
+  function daysUntil(str){
+    const target = parseLocalDate(str);
+    if(!target) return null;
     const today = new Date(); today.setHours(0,0,0,0);
-    const target = new Date(dateStr); target.setHours(0,0,0,0);
-    return Math.round((target-today)/86400000);
+    return Math.round((target - today) / 86400000);
   }
 
-  async function loadAnnouncement(path){
-    const res = await fetch(path, {cache:'no-store'});
-    if(!res.ok) throw new Error('HTTP '+res.status);
+  /* ── ย่อข้อมูลประกาศเหลือเฉพาะที่หน้ารวมต้องใช้ ─────────
+     ทำให้ cache เล็กมาก (ไม่เก็บ majors/documents ทั้งก้อน)
+     ไม่เก็บค่าที่ขึ้นกับ "วันนี้" — คำนวณใหม่ทุกครั้งที่เปิด  */
+  function summarize(data, path){
+    const meta   = data.meta || {};
+    const qual   = data.qualifications || {};
+    const majors = Array.isArray(data.majors) ? data.majors : [];
+    const timeline = (Array.isArray(data.timeline) ? data.timeline : [])
+      .filter(t => t && t.date)
+      .map(t => ({ label:t.label, date:t.date, dateDisplay:t.dateDisplay, isDeadline: !!t.isDeadline }));
+
+    const totalQuota = majors.reduce((sum,m)=>
+      sum + (Array.isArray(m.quotas) ? m.quotas.reduce((s,q)=> s + (Number(q.value)||0), 0) : 0), 0);
+
+    const gpaxVals = [qual.gpaxMin, ...majors.map(m=>m.gpaxMin)].filter(v => typeof v === 'number');
+
+    return {
+      path,
+      uni:          meta.universityShort || meta.university || '',
+      faculty:      meta.faculty || '',
+      programTitle: meta.programTitle || '',
+      round:        meta.round || '',
+      accentColor:  meta.accentColor || '',
+      levels:       Array.isArray(qual.educationLevel) ? qual.educationLevel : [],
+      timeline,
+      totalQuota,
+      majorCount:   majors.length,
+      gpax:         gpaxVals.length ? [Math.min(...gpaxVals), Math.max(...gpaxVals)] : null,
+      search: [
+        meta.university, meta.universityShort, meta.faculty, meta.programTitle, meta.round,
+        ...majors.map(m => `${m.code||''} ${m.name||''} ${m.nameEn||''}`)
+      ].join(' ').toLowerCase()
+    };
+  }
+
+  /* ── คำนวณสถานะตามวันปัจจุบัน ───────────────────────────
+     กติกา: ประกาศ "หมดเขต" เมื่อพ้นวัน isDeadline ล่าสุดไปแล้ว
+            (วันสุดท้ายยังเห็นอยู่ทั้งวัน)
+            ประกาศที่ไม่มี isDeadline เลย → ไม่ซ่อน            */
+  function applyDates(s){
+    const deadlineDiffs = s.timeline
+      .filter(t => t.isDeadline)
+      .map(t => daysUntil(t.date))
+      .filter(v => v !== null);
+
+    s.hasDeadline = deadlineDiffs.length > 0;
+    s.upcoming    = s.timeline
+      .map(t => ({ ...t, diff: daysUntil(t.date) }))
+      .filter(t => t.diff !== null && t.diff >= 0)
+      .sort((a,b) => a.diff - b.diff)[0] || null;
+    // หมดเขตรับสมัครไปแล้ว "และ" ไม่มีขั้นตอนอื่นค้างอยู่ข้างหน้าเลย
+    // (มีสัมภาษณ์/ประกาศผลรอ → ยังไม่ซ่อน ให้เด็กที่สมัครแล้วตามดูได้)
+    s.expired     = s.hasDeadline && Math.max(...deadlineDiffs) < 0 && !s.upcoming;
+    return s;
+  }
+
+  /* ── sessionStorage cache (พังก็ไม่เป็นไร ทำงานต่อได้) ── */
+  function cacheGet(path){
+    try{
+      const raw = sessionStorage.getItem(CACHE_PREFIX + path);
+      if(!raw) return null;
+      const box = JSON.parse(raw);
+      if(!box || Date.now() - box.t > CACHE_TTL) return null;
+      return box.s;
+    }catch(e){ return null; }
+  }
+  function cacheSet(path, s){
+    try{ sessionStorage.setItem(CACHE_PREFIX + path, JSON.stringify({ t: Date.now(), s })); }
+    catch(e){ /* เต็ม/ถูกปิด — ข้ามไป */ }
+  }
+
+  async function loadOne(path){
+    const cached = cacheGet(path);
+    if(cached) return cached;
+
+    const res = await fetch(path, { cache:'no-store' });
+    if(!res.ok) throw new Error('HTTP ' + res.status);
     const text = await res.text();
     const doc = new DOMParser().parseFromString(text, 'text/html');
-    const script = doc.getElementById('announcement-data');
-    if(!script) throw new Error('ไม่พบข้อมูล announcement-data');
-    const data = JSON.parse(script.textContent);
-    data.__path = path;
-    return data;
+    const node = doc.getElementById('announcement-data');
+    if(!node) throw new Error('ไม่พบข้อมูล announcement-data');
+
+    const summary = summarize(JSON.parse(node.textContent), path);
+    cacheSet(path, summary);
+    return summary;
   }
 
-  const cardsWrap = $('#cardsWrap');
-  const results = [];
-  const errors = [];
-
-  await Promise.all(MANIFEST.map(async (path) => {
-    try{ results.push(await loadAnnouncement(path)); }
-    catch(e){ errors.push({path, message:e.message}); }
-  }));
-
-  // ── Precompute per-announcement summary ──────────
-  results.forEach(d=>{
-    const upcoming = d.timeline
-      .map(t=>({...t, diff:daysUntil(t.date)}))
-      .filter(t=>t.diff>=0)
-      .sort((a,b)=>a.diff-b.diff)[0];
-    d.__upcoming = upcoming || null;
-    d.__totalQuota = d.majors.reduce((sum,m)=> sum + m.quotas.reduce((s,q)=>s+(q.value||0),0), 0);
-    const gpaxVals = [d.qualifications.gpaxMin, ...d.majors.map(m=>m.gpaxMin)].filter(v=>typeof v==='number');
-    d.__gpaxRange = gpaxVals.length ? [Math.min(...gpaxVals), Math.max(...gpaxVals)] : null;
-    d.__searchIndex = [
-      d.meta.university, d.meta.faculty, d.meta.programTitle, d.meta.round,
-      ...d.majors.map(m=>`${m.code} ${m.name} ${m.nameEn}`)
-    ].join(' ').toLowerCase();
-  });
-
-  // ── Hero: overall most urgent deadline ───────────
-  const allDeadlines = results
-    .map(d=> d.__upcoming ? {...d.__upcoming, uni:d.meta.universityShort, faculty:d.meta.faculty} : null)
-    .filter(Boolean)
-    .sort((a,b)=>a.diff-b.diff);
-  $('#heroSub').textContent = errors.length===0
-    ? `รวม ${results.length} ประกาศ จากทุกมหาวิทยาลัยที่เพิ่มไว้ในระบบ`
-    : `โหลดสำเร็จ ${results.length} ประกาศ (มีปัญหา ${errors.length} ไฟล์ ดูด้านล่าง)`;
-  if(allDeadlines.length){
-    const top = allDeadlines[0];
-    $('#urgentBox').style.display='flex';
-    $('#urgentDays').textContent = top.diff===0 ? 'วันนี้' : top.diff;
-    $('#urgentLabel').textContent = `${top.label} · ${top.uni}`;
-    $('#urgentSub').textContent = `${top.faculty} — ${top.dateDisplay}`;
-  }
-
-  // ── Error notes ───────────────────────────────────
-  if(errors.length){
-    errors.forEach(e=>{
-      cardsWrap.parentElement.insertBefore(
-        el('div','error-note', `⚠️ โหลด <span class="mono">${esc(e.path)}</span> ไม่สำเร็จ (${esc(e.message)}) — ตรวจสอบว่าไฟล์อยู่โฟลเดอร์เดียวกับ index.html`),
-        cardsWrap
-      );
-    });
-  }
-
-  // ── Filter chips (education levels found across data) ─
-  const levelSet = new Set();
-  results.forEach(d => (d.qualifications.educationLevel||[]).forEach(l=>levelSet.add(l)));
-  const chipsWrap = $('#chipsWrap');
-  let activeLevel = 'all';
-  const allChip = el('div','chip active','ทั้งหมด');
-  allChip.onclick = ()=>setLevel('all');
-  chipsWrap.appendChild(allChip);
-  [...levelSet].forEach(level=>{
-    const c = el('div','chip', esc(level));
-    c.onclick = ()=>setLevel(level);
-    chipsWrap.appendChild(c);
-  });
-  function setLevel(l){
-    activeLevel = l;
-    [...chipsWrap.children].forEach(c=> c.classList.toggle('active', c.textContent === (l==='all' ? 'ทั้งหมด' : l)));
-    render();
-  }
-
-  // ── Render ────────────────────────────────────────
-  const searchInput = $('#searchInput');
+  /* ═══ สถานะแอป ═══════════════════════════════════════ */
+  const cardsWrap  = $('#cardsWrap');
+  const errorWrap  = $('#errorWrap');
+  const hiddenNote = $('#hiddenNote');
+  const chipsWrap  = $('#chipsWrap');
+  const searchInput= $('#searchInput');
   const sortSelect = $('#sortSelect');
 
-  function render(){
-    const q = searchInput.value.trim().toLowerCase();
-    let filtered = results.filter(d=>{
-      const matchesQ = !q || d.__searchIndex.includes(q);
-      const matchesLevel = activeLevel==='all' || (d.qualifications.educationLevel||[]).includes(activeLevel);
-      return matchesQ && matchesLevel;
-    });
+  const items  = [];   // ประกาศที่โหลดสำเร็จ (รวมที่หมดเขต)
+  const errors = [];
+  const list   = (typeof MANIFEST !== 'undefined' && Array.isArray(MANIFEST)) ? MANIFEST : [];
+  let pending  = list.length;
+  let activeLevel = 'all';
+  let knownLevels = '';
+  let rafId = null;
 
-    if(sortSelect.value==='deadline'){
+  const active = () => items.filter(d => !d.expired);
+
+  function scheduleRender(){
+    if(rafId) return;
+    rafId = requestAnimationFrame(()=>{ rafId = null; paint(); });
+  }
+
+  /* ── โหลดแบบ progressive: ไฟล์ไหนเสร็จก่อน วาดก่อน ──── */
+  if(pending === 0){
+    paint();
+  } else {
+    list.forEach(path=>{
+      loadOne(path)
+        .then(s => { items.push(applyDates(s)); })
+        .catch(e => { errors.push({ path, message: e.message }); })
+        .finally(()=>{ pending--; scheduleRender(); });
+    });
+  }
+
+  /* ── Chips: สร้างใหม่เฉพาะตอนมีระดับการศึกษาใหม่โผล่มา ─ */
+  function syncChips(){
+    const set = new Set();
+    active().forEach(d => d.levels.forEach(l => set.add(l)));
+    const key = [...set].sort().join('|');
+    if(key === knownLevels) return;
+    knownLevels = key;
+
+    if(activeLevel !== 'all' && !set.has(activeLevel)) activeLevel = 'all';
+
+    chipsWrap.innerHTML = '';
+    const mk = (label, value) => {
+      const c = el('div', 'chip' + (activeLevel === value ? ' active' : ''), esc(label));
+      c.onclick = ()=>{ activeLevel = value; syncChipsActive(); paint(); };
+      chipsWrap.appendChild(c);
+    };
+    mk('ทั้งหมด', 'all');
+    [...set].forEach(l => mk(l, l));
+  }
+  function syncChipsActive(){
+    [...chipsWrap.children].forEach((c,i)=>{
+      const val = i === 0 ? 'all' : c.textContent;
+      c.classList.toggle('active', val === activeLevel);
+    });
+  }
+
+  /* ── Hero ───────────────────────────────────────────── */
+  function paintHero(){
+    const live = active();
+    const loading = pending > 0;
+
+    if(loading){
+      $('#heroSub').textContent = `กำลังโหลด… (${items.length}/${items.length + pending})`;
+    } else if(errors.length){
+      $('#heroSub').textContent = `เปิดรับอยู่ ${live.length} ประกาศ (มีปัญหา ${errors.length} ไฟล์ ดูด้านล่าง)`;
+    } else {
+      $('#heroSub').textContent = `รวม ${live.length} ประกาศที่ยังเปิดรับสมัครอยู่ตอนนี้`;
+    }
+
+    const soonest = live
+      .filter(d => d.upcoming)
+      .map(d => ({ ...d.upcoming, uni: d.uni, faculty: d.faculty }))
+      .sort((a,b) => a.diff - b.diff)[0];
+
+    if(soonest){
+      $('#urgentBox').style.display = 'flex';
+      $('#urgentDays').textContent  = soonest.diff === 0 ? 'วันนี้' : soonest.diff;
+      $('#urgentLabel').textContent = `${soonest.label} · ${soonest.uni}`;
+      $('#urgentSub').textContent   = `${soonest.faculty} — ${soonest.dateDisplay || ''}`;
+    } else {
+      $('#urgentBox').style.display = 'none';
+    }
+  }
+
+  /* ── Error notes ────────────────────────────────────── */
+  function paintErrors(){
+    errorWrap.innerHTML = '';
+    errors.forEach(e=>{
+      errorWrap.appendChild(el('div','error-note',
+        `⚠️ โหลด <span class="mono">${esc(e.path)}</span> ไม่สำเร็จ (${esc(e.message)}) — ตรวจสอบว่าไฟล์อยู่โฟลเดอร์เดียวกับ index.html`));
+    });
+  }
+
+  /* ── Cards ──────────────────────────────────────────── */
+  function buildCard(d){
+    const card = el('a','card');
+    card.href = d.path;
+    if(d.accentColor) card.style.borderLeftColor = d.accentColor;
+
+    const top = el('div','card__top');
+    top.appendChild(el('div','card__tag', `<span class="card__uni">${esc(d.uni)}</span> · ${esc(d.faculty)}`));
+    card.appendChild(top);
+
+    card.appendChild(el('div','card__title', esc(d.programTitle)));
+
+    const badges = el('div','card__badges');
+    d.levels.forEach(l => badges.appendChild(el('span','badge', esc(l))));
+    if(d.round) badges.appendChild(el('span','badge', esc(d.round)));
+    card.appendChild(badges);
+
+    const stats = el('div','card__stats');
+    stats.appendChild(el('div','stat', `รับรวม<b>${d.totalQuota.toLocaleString()} คน</b>`));
+    stats.appendChild(el('div','stat', `สาขา<b>${d.majorCount}</b>`));
+    if(d.gpax){
+      const [lo,hi] = d.gpax;
+      stats.appendChild(el('div','stat', `GPAX<b>${lo===hi ? lo.toFixed(2) : lo.toFixed(2)+'–'+hi.toFixed(2)}</b>`));
+    }
+    card.appendChild(stats);
+
+    if(d.upcoming){
+      const cd = el('span','card__cd');
+      if(d.upcoming.isDeadline && d.upcoming.diff <= 14) cd.classList.add('urgent');
+      cd.innerHTML = d.upcoming.diff === 0
+        ? `<b>วันนี้</b> ${esc(d.upcoming.label)}`
+        : `<b>อีก ${d.upcoming.diff} วัน</b> ${esc(d.upcoming.label)} (${esc(d.upcoming.dateDisplay || '')})`;
+      card.appendChild(cd);
+    } else if(!d.hasDeadline){
+      card.appendChild(el('span','card__cd wait','⏳ รอประกาศวันที่รับสมัคร'));
+    } else {
+      card.appendChild(el('span','card__cd done','🏁 ครบทุกขั้นตอนแล้ว'));
+    }
+
+    card.appendChild(el('span','card__arrow','→'));
+    return card;
+  }
+
+  function paint(){
+    syncChips();
+    paintErrors();
+    paintHero();
+
+    const q = searchInput.value.trim().toLowerCase();
+    const filtered = active().filter(d =>
+      (!q || d.search.includes(q)) &&
+      (activeLevel === 'all' || d.levels.includes(activeLevel))
+    );
+
+    if(sortSelect.value === 'deadline'){
       filtered.sort((a,b)=>{
-        const da = a.__upcoming ? a.__upcoming.diff : Infinity;
-        const db = b.__upcoming ? b.__upcoming.diff : Infinity;
+        const da = a.upcoming ? a.upcoming.diff : Infinity;
+        const db = b.upcoming ? b.upcoming.diff : Infinity;
         return da - db;
       });
     } else {
-      filtered.sort((a,b)=> a.meta.faculty.localeCompare(b.meta.faculty, 'th'));
+      filtered.sort((a,b)=> a.faculty.localeCompare(b.faculty, 'th'));
     }
 
-    $('#countLabel').textContent = `${filtered.length} ประกาศ`;
+    $('#countLabel').textContent = pending > 0
+      ? `${filtered.length} ประกาศ · กำลังโหลดอีก ${pending}`
+      : `${filtered.length} ประกาศ`;
+
     cardsWrap.innerHTML = '';
+    filtered.forEach(d => cardsWrap.appendChild(buildCard(d)));
 
-    if(filtered.length===0){
-      cardsWrap.appendChild(el('div','empty','ไม่พบประกาศที่ตรงกับคำค้นหา 🔍'));
-      return;
+    // โครงการ์ดวิบวับ = จำนวนไฟล์ที่ยังโหลดไม่เสร็จ
+    for(let i=0; i<pending; i++) cardsWrap.appendChild(el('div','skeleton'));
+
+    if(filtered.length === 0 && pending === 0){
+      const allExpired = items.length > 0 && active().length === 0;
+      cardsWrap.appendChild(el('div','empty', allExpired
+        ? 'ตอนนี้ยังไม่มีประกาศที่เปิดรับสมัครอยู่ 🌤️'
+        : 'ไม่พบประกาศที่ตรงกับคำค้นหา 🔍'));
     }
 
-    filtered.forEach(d=>{
-      const card = el('a','card');
-      card.href = d.__path;
-      card.style.borderLeftColor = d.meta.accentColor || 'var(--ink)';
-
-      const top = el('div','card__top');
-      top.appendChild(el('div','card__tag', `<span class="card__uni">${esc(d.meta.universityShort)}</span> · ${esc(d.meta.faculty)}`));
-      card.appendChild(top);
-
-      card.appendChild(el('div','card__title', esc(d.meta.programTitle)));
-
-      const badges = el('div','card__badges');
-      (d.qualifications.educationLevel||[]).forEach(l=> badges.appendChild(el('span','badge', esc(l))));
-      badges.appendChild(el('span','badge', esc(d.meta.round)));
-      card.appendChild(badges);
-
-      const stats = el('div','card__stats');
-      stats.appendChild(el('div','stat', `รับรวม<b>${d.__totalQuota.toLocaleString()} คน</b>`));
-      stats.appendChild(el('div','stat', `สาขา<b>${d.majors.length}</b>`));
-      if(d.__gpaxRange){
-        const [lo,hi] = d.__gpaxRange;
-        stats.appendChild(el('div','stat', `GPAX<b>${lo===hi ? lo.toFixed(2) : lo.toFixed(2)+'–'+hi.toFixed(2)}</b>`));
-      }
-      card.appendChild(stats);
-
-      if(d.__upcoming){
-        const cd = el('span','card__cd');
-        if(d.__upcoming.isDeadline && d.__upcoming.diff<=14) cd.classList.add('urgent');
-        cd.innerHTML = d.__upcoming.diff===0
-          ? `<b>วันนี้</b> ${esc(d.__upcoming.label)}`
-          : `<b>อีก ${d.__upcoming.diff} วัน</b> ${esc(d.__upcoming.label)} (${esc(d.__upcoming.dateDisplay)})`;
-        card.appendChild(cd);
-      } else {
-        card.appendChild(el('span','card__cd done','🏁 ครบทุกขั้นตอนแล้ว'));
-      }
-
-      card.appendChild(el('span','card__arrow','→'));
-      cardsWrap.appendChild(card);
-    });
+    // บรรทัดเล็กๆ ท้ายหน้า — ไว้แยกว่า "หมดเขต" หรือ "ไฟล์พัง"
+    const hiddenCount = items.length - active().length;
+    if(hiddenCount > 0 && pending === 0){
+      hiddenNote.style.display = '';
+      hiddenNote.textContent = `ซ่อนประกาศที่ปิดรับสมัครแล้ว ${hiddenCount} รายการ`;
+    } else {
+      hiddenNote.style.display = 'none';
+    }
   }
 
-  searchInput.addEventListener('input', render);
-  sortSelect.addEventListener('change', render);
-  render();
+  searchInput.addEventListener('input', paint);
+  sortSelect.addEventListener('change', paint);
 })();
 </script>
 </body>
