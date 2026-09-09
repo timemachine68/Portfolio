@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>รวมลิงก์สมัคร TCAS 2570</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@500;600;700&family=Sarabun:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --ink:#1B2A4A; --ink-soft:#3D4E70; --paper:#F5F7FA; --panel:#FFFFFF;
+    --line:#E3E8F0; --mango:#FF9F1C; --mango-deep:#E8850A; --mint:#06D6A0; --coral:#EF476F;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{ background:var(--paper); color:var(--ink); font-family:'Sarabun',sans-serif; line-height:1.6; -webkit-font-smoothing:antialiased; }
+  h1,h2{font-family:'Kanit',sans-serif;}
+  a{color:inherit;}
+  .wrap{max-width:760px; margin:0 auto; padding:20px 16px 40px;}
+
+  .back{ display:inline-flex; gap:6px; font-size:13px; color:var(--ink-soft); text-decoration:none; margin-bottom:14px;}
+
+  .header{ margin-bottom:18px; }
+  .header h1{ font-size:21px; margin:0 0 4px; }
+  .header p{ font-size:13px; color:var(--ink-soft); margin:0; }
+
+  .toolbar{ display:flex; gap:8px; margin-bottom:16px; }
+  .btn{
+    flex:1; text-align:center; padding:11px; border-radius:100px; font-size:13px; font-weight:600;
+    border:1px solid var(--line); background:var(--panel); cursor:pointer; color:var(--ink);
+  }
+  .btn.primary{ background:var(--ink); color:#fff; border-color:var(--ink); }
+
+  .status{ font-size:12.5px; color:var(--ink-soft); margin-bottom:10px; }
+
+  table{ width:100%; border-collapse:collapse; background:var(--panel); border-radius:14px; overflow:hidden; border:1px solid var(--line); }
+  thead th{ background:#EEF2FA; font-size:11.5px; text-transform:uppercase; letter-spacing:.3px; color:var(--ink-soft); padding:10px 12px; text-align:left; }
+  tbody td{ padding:12px; border-top:1px solid var(--line); font-size:13.5px; vertical-align:top; }
+  tbody tr:hover{ background:#FAFBFD; }
+  .uni{ font-weight:700; }
+  .faculty{ color:var(--ink-soft); font-size:12.5px; margin-top:2px; }
+  .rounds{ font-size:11px; color:var(--mango-deep); margin-top:4px; }
+  .linkcell{ text-align:right; white-space:nowrap; }
+  .linkbtn{
+    display:inline-block; padding:7px 14px; border-radius:100px; background:var(--ink); color:#fff;
+    text-decoration:none; font-size:12.5px; font-weight:600;
+  }
+  .skeleton-row td{ }
+  .skeleton{ height:14px; border-radius:6px; background:linear-gradient(90deg,#EEF1F6 25%,#F7F9FB 37%,#EEF1F6 63%); background-size:400% 100%; animation:sk 1.3s ease infinite; }
+  @keyframes sk{ 0%{background-position:100% 0} 100%{background-position:0 0} }
+
+  .error-note{ background:#FDE7EC; color:var(--coral); border-radius:10px; padding:10px 12px; font-size:12.5px; margin-bottom:10px; }
+  .footer-note{ text-align:center; font-size:11px; color:var(--ink-soft); opacity:.7; margin-top:22px; }
+
+  @media print{
+    body{ background:#fff; }
+    .toolbar, .back{ display:none; }
+    .linkbtn{ background:none; color:var(--ink); text-decoration:underline; padding:0; }
+    table{ border:1px solid #999; }
+    thead th{ background:#eee; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="index.html">← กลับหน้ารวมประกาศ</a>
+
+  <div class="header">
+    <h1>🔗 รวมลิงก์สมัคร TCAS ปีการศึกษา 2570</h1>
+    <p>ดึงข้อมูลอัตโนมัติจากประกาศทั้งหมดในหน้ารวม — อ่านเกณฑ์คุณสมบัติที่หน้ารายละเอียดก่อนสมัครเสมอ</p>
+  </div>
+
+  <div class="toolbar">
+    <button class="btn primary" onclick="window.print()">🖨️ พิมพ์หน้านี้</button>
+    <button class="btn" id="copyBtn">📋 คัดลอกลิงก์ทั้งหมด</button>
+  </div>
+
+  <p class="status" id="statusLine">กำลังโหลด…</p>
+  <div id="errorWrap"></div>
+
+  <table>
+    <thead>
+      <tr><th>มหาวิทยาลัย</th><th>คณะ / หลักสูตร</th><th></th></tr>
+    </thead>
+    <tbody id="tbody">
+      <tr class="skeleton-row"><td colspan="3"><div class="skeleton"></div></td></tr>
+      <tr class="skeleton-row"><td colspan="3"><div class="skeleton"></div></td></tr>
+      <tr class="skeleton-row"><td colspan="3"><div class="skeleton"></div></td></tr>
+    </tbody>
+  </table>
+
+  <p class="footer-note">รายชื่อไฟล์ประกาศดึงจาก MANIFEST ใน index.html โดยอัตโนมัติ — เพิ่มประกาศใหม่ที่หน้ารวมแล้วหน้านี้จะอัปเดตเองโดยไม่ต้องแก้ไฟล์นี้</p>
+</div>
+
+<script>
+(function(){
+  const $ = s => document.querySelector(s);
+  const el = (tag, cls, html) => { const n=document.createElement(tag); if(cls) n.className=cls; if(html!==undefined) n.innerHTML=html; return n; };
+  const esc = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+
+  const tbody = $('#tbody');
+  const statusLine = $('#statusLine');
+  const errorWrap = $('#errorWrap');
+  const errors = [];
+  let rows = [];
+
+  async function getManifest(){
+    const res = await fetch('index.html', { cache:'no-store' });
+    if(!res.ok) throw new Error('เปิด index.html ไม่ได้ (HTTP ' + res.status + ')');
+    const text = await res.text();
+    const m = text.match(/const MANIFEST\s*=\s*\[([\s\S]*?)\]/);
+    if(!m) throw new Error('หา MANIFEST ใน index.html ไม่เจอ');
+    const files = [...m[1].matchAll(/"([^"]+\.html)"/g)].map(x => x[1]);
+    if(!files.length) throw new Error('MANIFEST ว่างเปล่า');
+    return files;
+  }
+
+  async function loadOne(path){
+    const res = await fetch(path, { cache:'no-store' });
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    const text = await res.text();
+    const doc = new DOMParser().parseFromString(text, 'text/html');
+    const node = doc.getElementById('announcement-data');
+    if(!node) throw new Error('ไม่พบ announcement-data');
+    const data = JSON.parse(node.textContent);
+    const meta = data.meta || {};
+    return {
+      uni: meta.universityShort || meta.university || '?',
+      faculty: meta.faculty || '',
+      round: meta.round || '',
+      applyUrl: data.applyUrl || '#'
+    };
+  }
+
+  function render(){
+    // รวมแถวที่ มหา'ลัย+คณะ+ลิงก์ ซ้ำกัน (เช่น 2 รอบ Portfolio ที่ใช้ลิงก์เดียวกัน) ให้เหลือแถวเดียว
+    const grouped = new Map();
+    rows.forEach(r=>{
+      const key = r.uni + '|' + r.faculty + '|' + r.applyUrl;
+      if(!grouped.has(key)) grouped.set(key, { ...r, rounds: new Set() });
+      if(r.round) grouped.get(key).rounds.add(r.round);
+    });
+
+    const list = [...grouped.values()].sort((a,b)=>
+      a.uni.localeCompare(b.uni, 'th') || a.faculty.localeCompare(b.faculty, 'th'));
+
+    tbody.innerHTML = '';
+    list.forEach(r=>{
+      const tr = el('tr');
+      tr.appendChild(el('td','', `<span class="uni">${esc(r.uni)}</span>`));
+      const roundsText = [...r.rounds].join(', ');
+      tr.appendChild(el('td','', `<div class="faculty">${esc(r.faculty)}</div>${roundsText ? `<div class="rounds">${esc(roundsText)}</div>` : ''}`));
+      const td3 = el('td','linkcell');
+      const a = el('a','linkbtn','ไปหน้าสมัคร →');
+      a.href = r.applyUrl; a.target = '_blank'; a.rel = 'noopener';
+      td3.appendChild(a);
+      tr.appendChild(td3);
+      tbody.appendChild(tr);
+    });
+
+    errorWrap.innerHTML = '';
+    errors.forEach(e => errorWrap.appendChild(el('div','error-note', `⚠️ โหลด ${esc(e.path)} ไม่สำเร็จ (${esc(e.message)})`)));
+
+    statusLine.textContent = `รวม ${list.length} ลิงก์ จาก ${rows.length} ประกาศ` + (errors.length ? ` · มีปัญหา ${errors.length} ไฟล์` : '');
+
+    window._allLinks = list.map(r => `${r.uni} - ${r.faculty}: ${r.applyUrl}`).join('\n');
+  }
+
+  (async function init(){
+    try{
+      const files = await getManifest();
+      const results = await Promise.allSettled(files.map(loadOne));
+      results.forEach((res, i)=>{
+        if(res.status === 'fulfilled') rows.push(res.value);
+        else errors.push({ path: files[i], message: res.reason.message });
+      });
+      render();
+    }catch(e){
+      statusLine.textContent = '';
+      errorWrap.appendChild(el('div','error-note', `⚠️ โหลดรายชื่อประกาศไม่สำเร็จ: ${esc(e.message)}`));
+      tbody.innerHTML = '';
+    }
+  })();
+
+  $('#copyBtn').addEventListener('click', async ()=>{
+    if(!window._allLinks) return;
+    try{
+      await navigator.clipboard.writeText(window._allLinks);
+      const btn = $('#copyBtn');
+      const original = btn.textContent;
+      btn.textContent = '✅ คัดลอกแล้ว';
+      setTimeout(()=> btn.textContent = original, 1500);
+    }catch(e){
+      alert('คัดลอกไม่สำเร็จ — เบราว์เซอร์นี้อาจไม่รองรับ');
+    }
+  });
+})();
+</script>
+</body>
+</html>
