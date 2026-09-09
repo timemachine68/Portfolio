@@ -27,7 +27,8 @@ const MANIFEST = [
   "kmitl-sci-portfolio-r1-1-2570.html",
   "kmitl-sci-portfolio-r1-2-2570.html",
   "kmitl-la-portfolio-r1-2570.html",
-  "swu-goodstudent-r1-1-2570.html"
+  "swu-goodstudent-r1-1-2570.html",
+  "buu-changpheuak-r1-2-2570.html"
 ];
 </script>
 
@@ -445,7 +446,9 @@ const MANIFEST = [
     card.appendChild(badges);
 
     const stats = el('div','card__stats');
-    stats.appendChild(el('div','stat', `รับรวม<b>${d.totalQuota.toLocaleString()} คน</b>`));
+    stats.appendChild(el('div','stat', d.totalQuota > 0
+      ? `รับรวม<b>${d.totalQuota.toLocaleString()} คน</b>`
+      : `รับรวม<b>ตามโควตาที่จัดสรร</b>`));
     stats.appendChild(el('div','stat', `สาขา<b>${d.majorCount}</b>`));
     if(d.gpax){
       const [lo,hi] = d.gpax;
