@@ -11,6 +11,16 @@
   MANIFEST — เพิ่มมหาวิทยาลัย/ประกาศใหม่ แค่เติมชื่อไฟล์ตรงนี้บรรทัดเดียว
   ไฟล์ที่เพิ่มต้องอยู่โฟลเดอร์เดียวกับ index.html นี้ และใช้ schema
   เดียวกับไฟล์ประกาศต้นแบบ (มี <script id="announcement-data">)
+
+  FIELD ใหม่ (ไม่บังคับ): meta.applicationChannel — บอกว่าประกาศนี้
+  สมัครผ่านช่องทางไหน ใช้กรองเป็นเมนู "ช่องทางสมัคร" ด้านบน มีค่าได้ 3 แบบ:
+    "quota"  → 🏫 โควตาโรงเรียน       (มีที่นั่งจำนวนจำกัดจัดสรรให้แต่ละโรงเรียน
+                                        โรงเรียนคัดเลือกเองแล้วส่งชื่อ)
+    "school" → 📋 ต้องสมัครผ่านโรงเรียน (ไม่มีโควตาจำกัดตายตัว แต่ครู/โรงเรียน
+                                        ต้องเป็นผู้กรอกข้อมูล/ส่งเอกสารแทนนักเรียน)
+    "self"   → 🧑‍🎓 นักเรียนสมัครเอง    (นักเรียนกรอกใบสมัครในระบบมหาวิทยาลัย/
+                                        มหาวิทยาลัย/ทปอ. ด้วยตนเองโดยตรง)
+  ไฟล์เก่าที่ยังไม่มี field นี้ จะไม่ขึ้น chip กรองช่องทาง (แต่ยังแสดงในหน้ารวมตามปกติ)
   ═══════════════════════════════════════════════════════════════
 -->
 <script id="manifest-data">
@@ -131,6 +141,9 @@ const MANIFEST = [
     font-size:11px; padding:3px 9px; border-radius:100px;
     background:#EEF2FA; color:var(--ink-soft); font-weight:500;
   }
+  .badge-ch-quota{ background:#E4FBF3; color:#0A9E77; }
+  .badge-ch-school{ background:#FFF3E2; color:var(--mango-deep); }
+  .badge-ch-self{ background:#EAF1FF; color:#2B5FBF; }
   .card__stats{ display:flex; gap:16px; margin-bottom:10px; flex-wrap:wrap;}
   .stat{ font-size:12.5px; color:var(--ink-soft); }
   .stat b{ font-family:'IBM Plex Mono',monospace; color:var(--ink); font-size:14px; display:block; }
@@ -187,6 +200,7 @@ const MANIFEST = [
       <input type="text" id="searchInput" placeholder="ค้นหามหาวิทยาลัย คณะ หรือสาขา…">
     </div>
     <div class="filters-row" id="chipsWrap"></div>
+    <div class="filters-row" id="channelChipsWrap" style="display:none;"></div>
   </div>
 
   <div class="sortrow">
@@ -224,6 +238,13 @@ const MANIFEST = [
   const CACHE_VER = 'v1';
   const CACHE_TTL = 30 * 60 * 1000;
   const CACHE_PREFIX = 'admguide:' + CACHE_VER + ':';
+
+  /* ── ช่องทางสมัคร (meta.applicationChannel) ─────────────── */
+  const CHANNEL_LABELS = {
+    quota:  '🏫 โควตาโรงเรียน',
+    school: '📋 ต้องสมัครผ่านโรงเรียน',
+    self:   '🧑‍🎓 นักเรียนสมัครเอง'
+  };
 
   /* ── วันที่: parse เองเป็นเวลาท้องถิ่น ───────────────────
      new Date("2026-11-30") จะถูกตีความเป็น UTC เที่ยงคืน
@@ -266,6 +287,7 @@ const MANIFEST = [
       programTitle: meta.programTitle || '',
       round:        meta.round || '',
       accentColor:  meta.accentColor || '',
+      channel:      meta.applicationChannel || null,
       levels:       Array.isArray(qual.educationLevel) ? qual.educationLevel : [],
       timeline,
       totalQuota,
@@ -335,6 +357,7 @@ const MANIFEST = [
   const errorWrap  = $('#errorWrap');
   const hiddenNote = $('#hiddenNote');
   const chipsWrap  = $('#chipsWrap');
+  const channelChipsWrap = $('#channelChipsWrap');
   const searchInput= $('#searchInput');
   const sortSelect = $('#sortSelect');
 
@@ -344,6 +367,8 @@ const MANIFEST = [
   let pending  = list.length;
   let activeLevel = 'all';
   let knownLevels = '';
+  let activeChannel = 'all';
+  let knownChannels = '';
   let rafId = null;
 
   const active = () => items.filter(d => !d.expired);
@@ -388,6 +413,36 @@ const MANIFEST = [
     [...chipsWrap.children].forEach((c,i)=>{
       const val = i === 0 ? 'all' : c.textContent;
       c.classList.toggle('active', val === activeLevel);
+    });
+  }
+
+  /* ── Chips ช่องทางสมัคร: เหมือนกันแต่ label ≠ value เลยเก็บ value
+     ไว้ใน data-value แทนอ่านจาก textContent ────────────────── */
+  function syncChannelChips(){
+    const set = new Set();
+    active().forEach(d => { if(d.channel) set.add(d.channel); });
+    const key = [...set].sort().join('|');
+    if(key === knownChannels) return;
+    knownChannels = key;
+
+    channelChipsWrap.style.display = set.size ? '' : 'none';
+    if(!set.size) return;
+
+    if(activeChannel !== 'all' && !set.has(activeChannel)) activeChannel = 'all';
+
+    channelChipsWrap.innerHTML = '';
+    const mk = (label, value) => {
+      const c = el('div', 'chip' + (activeChannel === value ? ' active' : ''), esc(label));
+      c.dataset.value = value;
+      c.onclick = ()=>{ activeChannel = value; syncChannelChipsActive(); paint(); };
+      channelChipsWrap.appendChild(c);
+    };
+    mk('ทุกช่องทางสมัคร', 'all');
+    [...set].forEach(v => mk(CHANNEL_LABELS[v] || v, v));
+  }
+  function syncChannelChipsActive(){
+    [...channelChipsWrap.children].forEach(c=>{
+      c.classList.toggle('active', c.dataset.value === activeChannel);
     });
   }
 
@@ -443,6 +498,9 @@ const MANIFEST = [
     const badges = el('div','card__badges');
     d.levels.forEach(l => badges.appendChild(el('span','badge', esc(l))));
     if(d.round) badges.appendChild(el('span','badge', esc(d.round)));
+    if(d.channel && CHANNEL_LABELS[d.channel]){
+      badges.appendChild(el('span','badge badge-ch-'+d.channel, esc(CHANNEL_LABELS[d.channel])));
+    }
     card.appendChild(badges);
 
     const stats = el('div','card__stats');
@@ -475,13 +533,15 @@ const MANIFEST = [
 
   function paint(){
     syncChips();
+    syncChannelChips();
     paintErrors();
     paintHero();
 
     const q = searchInput.value.trim().toLowerCase();
     const filtered = active().filter(d =>
       (!q || d.search.includes(q)) &&
-      (activeLevel === 'all' || d.levels.includes(activeLevel))
+      (activeLevel === 'all' || d.levels.includes(activeLevel)) &&
+      (activeChannel === 'all' || d.channel === activeChannel)
     );
 
     if(sortSelect.value === 'deadline'){
