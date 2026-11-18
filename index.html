@@ -171,6 +171,17 @@ const MANIFEST = [
   .card__cd.done{ background:#E4FBF3; color:#0A9E77; }
   .card__cd.wait{ background:#EEF2FA; color:var(--ink-soft); }
   .card__cd b{ font-family:'IBM Plex Mono',monospace; }
+  .keys{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:4px; padding-right:28px; }
+  .key{ display:flex; flex-direction:column; gap:2px; padding:8px 11px; border-radius:12px; background:#FFF3E2; color:var(--mango-deep); }
+  .key__t{ font-size:11.5px; font-weight:600; }
+  .key__d{ font-size:15px; font-weight:700; color:var(--ink); }
+  .key__w{ font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:600; }
+  .key:nth-child(2){ background:#EAF1FF; color:#2B5FBF; }
+  .key--urgent{ background:#FDE7EC !important; color:var(--coral) !important; }
+  .key--past{ background:#EEF2FA !important; color:var(--ink-soft) !important; }
+  .key--past .key__d{ color:var(--ink-soft); font-weight:600; }
+  .key--none{ background:#EEF2FA !important; color:var(--ink-soft) !important; }
+  @media (max-width:420px){ .keys{ grid-template-columns:1fr; padding-right:0; } }
   .card__arrow{ position:absolute; right:14px; bottom:14px; color:var(--ink-soft); font-size:15px; }
 
   .skeleton{
@@ -333,6 +344,16 @@ const MANIFEST = [
     // หมดเขตรับสมัครไปแล้ว "และ" ไม่มีขั้นตอนอื่นค้างอยู่ข้างหน้าเลย
     // (มีสัมภาษณ์/ประกาศผลรอ → ยังไม่ซ่อน ให้เด็กที่สมัครแล้วตามดูได้)
     s.expired     = s.hasDeadline && Math.max(...deadlineDiffs) < 0 && !s.upcoming;
+
+    /* วันสำคัญที่การ์ดเน้น: (1) วันสุดท้ายรับสมัคร (2) วันประกาศผลผู้ผ่านการคัดเลือก
+       เลือกวันที่ "ใกล้ที่สุดที่ยังไม่ถึง" ถ้าผ่านหมดแล้วใช้วันสุดท้ายแทน */
+    const withDiff = s.timeline.map(t => ({ ...t, diff: daysUntil(t.date) })).filter(t => t.diff !== null)
+      .sort((a,b) => a.diff - b.diff);
+    const pick = list => list.find(t => t.diff >= 0) || list[list.length-1] || null;
+    s.keyDeadline = pick(withDiff.filter(t => t.isDeadline));
+    const isResult = t => /ประกาศ(ผล|รายชื่อผู้ผ่าน|ผู้ผ่าน)/.test(t.label)
+      && !/มีสิทธิ์\s*(เข้ารับ)?\s*(สอบ|สัมภาษณ์|การคัดเลือก)/.test(t.label);
+    s.keyResult   = pick(withDiff.filter(isResult));
     return s;
   }
 
@@ -529,17 +550,27 @@ const MANIFEST = [
     }
     card.appendChild(stats);
 
-    if(d.upcoming){
-      const cd = el('span','card__cd');
-      if(d.upcoming.isDeadline && d.upcoming.diff <= 14) cd.classList.add('urgent');
-      cd.innerHTML = d.upcoming.diff === 0
-        ? `<b>วันนี้</b> ${esc(d.upcoming.label)}`
-        : `<b>อีก ${d.upcoming.diff} วัน</b> ${esc(d.upcoming.label)} (${esc(d.upcoming.dateDisplay || '')})`;
-      card.appendChild(cd);
-    } else if(!d.hasDeadline){
-      card.appendChild(el('span','card__cd wait','⏳ รอประกาศวันที่รับสมัคร'));
+    /* เน้น 2 วันสำคัญ: ปิดรับสมัคร + ประกาศผล */
+    const THM = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+    const shortDate = iso => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso||''); return m ? `${+m[3]} ${THM[+m[2]-1]} ${+m[1]+543}` : ''; };
+    const keyBox = (icon, title, t, doneText) => {
+      const box = el('div','key');
+      if(!t){ box.classList.add('key--none'); box.innerHTML = `<span class="key__t">${icon} ${title}</span><span class="key__d">ยังไม่มีข้อมูล</span>`; return box; }
+      let when, cls = '';
+      if(t.diff < 0){ when = doneText; cls = 'key--past'; }
+      else if(t.diff === 0){ when = 'วันนี้'; cls = 'key--urgent'; }
+      else { when = `อีก ${t.diff} วัน`; if(t.isDeadline && t.diff <= 14) cls = 'key--urgent'; }
+      if(cls) box.classList.add(cls);
+      box.innerHTML = `<span class="key__t">${icon} ${title}</span><span class="key__d">${esc(shortDate(t.date))}</span><span class="key__w">${esc(when)}</span>`;
+      return box;
+    };
+    if(d.keyDeadline || d.keyResult){
+      const keys = el('div','keys');
+      keys.appendChild(keyBox('📝','วันสุดท้ายรับสมัคร', d.keyDeadline, 'ปิดรับแล้ว'));
+      keys.appendChild(keyBox('📢','วันประกาศผล', d.keyResult, 'ประกาศแล้ว'));
+      card.appendChild(keys);
     } else {
-      card.appendChild(el('span','card__cd done','🏁 ครบทุกขั้นตอนแล้ว'));
+      card.appendChild(el('span','card__cd wait','⏳ รอประกาศวันที่รับสมัคร'));
     }
 
     card.appendChild(el('span','card__arrow','→'));
@@ -561,8 +592,8 @@ const MANIFEST = [
 
     if(sortSelect.value === 'deadline'){
       filtered.sort((a,b)=>{
-        const da = a.upcoming ? a.upcoming.diff : Infinity;
-        const db = b.upcoming ? b.upcoming.diff : Infinity;
+        const da = (a.keyDeadline && a.keyDeadline.diff >= 0) ? a.keyDeadline.diff : Infinity;
+        const db = (b.keyDeadline && b.keyDeadline.diff >= 0) ? b.keyDeadline.diff : Infinity;
         return da - db;
       });
     } else {
